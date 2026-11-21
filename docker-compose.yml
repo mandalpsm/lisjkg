@@ -1,0 +1,39 @@
+# docker compose up -d --build                       -> web app + API on http://localhost:8080
+# docker compose --profile neo4j up -d               -> also start Neo4j (browser http://localhost:7474)
+# docker compose --profile graphdb up -d             -> also start GraphDB (http://localhost:7200)
+# Copy .env.example to .env first. Inside compose, use NEO4J_URL=http://neo4j:7474 and GRAPHDB_URL=http://graphdb:7200/repositories/library
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports: ["8080:8080"]
+    env_file: [.env]
+    environment:
+      HOST: 0.0.0.0
+    volumes:
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+
+  neo4j:
+    profiles: ["neo4j"]
+    image: neo4j:5
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?set NEO4J_PASSWORD (min 8 chars) in .env}
+    ports: ["127.0.0.1:7474:7474", "127.0.0.1:7687:7687"]
+    volumes: [neo4j_data:/data]
+
+  graphdb:
+    profiles: ["graphdb"]
+    image: ${GRAPHDB_IMAGE:-ontotext/graphdb:10.6.4}   # verify the tag you want at https://hub.docker.com/r/ontotext/graphdb
+    restart: unless-stopped
+    ports: ["127.0.0.1:7200:7200"]
+    volumes: [graphdb_data:/opt/graphdb/home]
+
+volumes:
+  neo4j_data:
+  graphdb_data:

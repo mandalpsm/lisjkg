@@ -1,0 +1,3 @@
+No licence has been chosen for this code. Before publishing it (GitHub, institutional repository, journal supplement)
+add the licence you prefer (for example MIT or Apache-2.0 for the code, CC BY 4.0 for the dataset) and update "license" in package.json.
+Check the terms of the source data in data/dataset.json.gz and of third-party services the front end calls (OpenAlex, Crossref, Wikidata, DBpedia, DOAJ, Google Fonts, cdnjs).

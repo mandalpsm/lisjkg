@@ -1,0 +1,17 @@
+{
+  "name": "lis-kg-explorer-fullstack",
+  "version": "1.0.0",
+  "description": "Full-stack edition of the Semantic KG Explorer for Library & Information Science: Node.js API server (zero dependencies), OAI-PMH, graph-database proxies and the single-page front end.",
+  "main": "server/index.js",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test",
+    "extract": "node scripts/extract-from-standalone.js",
+    "build:dataset": "node scripts/build-dataset.js",
+    "backup": "node scripts/backup.js",
+    "check": "node scripts/check-dataset.js"
+  },
+  "license": "UNLICENSED"
+}
