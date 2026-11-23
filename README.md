@@ -1,0 +1,116 @@
+# LIS KG Explorer
+
+Semantic Mapping for constructing knowledge graphs from Library and Information Science (LIS) journal records. The app supports Boolean and semantic search, English and Bengali (and Hindi) retrieval, authority control, faceted discovery, knowledge-graph views, research-intelligence tools (entity extraction, hypotheses, research gaps), evaluation tools, and RDF/Turtle, SKOS and graph-database exports.
+
+The app runs entirely in the browser. The server only delivers the files.
+
+## Contents
+
+```
+lis-kg-explorer/
+├── README.md
+├── package.json              npm scripts (no dependencies)
+├── .gitignore
+├── server/
+│   └── server.js             static file server + /api/health and /api/datasets
+└── public/                   everything the browser loads
+    ├── index.html            page structure and loader
+    ├── css/
+    │   └── styles.css        all styles (merged from the original page)
+    ├── js/
+    │   └── app.js            all application logic (merged from the original page)
+    └── data/
+        ├── embeddedData.txt  main LIS record set (gzip + base64 encoded)
+        └── jmEmbedded.txt    second embedded dataset (gzip + base64 encoded)
+```
+
+## Requirements
+
+- Node.js 18 or later, to run the server. Check with `node -v`.
+- A modern browser: Chrome, Edge, Firefox or Safari. Chrome or Edge is recommended for voice search.
+- No npm install is needed. The server uses only Node built-in modules.
+
+## Running locally
+
+```bash
+cd lis-kg-explorer
+npm start                 # or: node server/server.js
+```
+
+Open **http://localhost:8080** in your browser.
+
+To use another port:
+
+```bash
+PORT=3000 npm start       # Windows PowerShell: $env:PORT=3000; npm start
+```
+
+Do not open `public/index.html` directly from the file system. Browsers block the `fetch()` calls that load the data when a page is opened as `file://`. Use the server, or use the single-file build described below.
+
+## Server API
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/` | The application (`public/index.html`) |
+| GET | `/api/health` | Liveness check: `{ "status": "ok", ... }` |
+| GET | `/api/datasets` | Lists the embedded data files and their sizes in bytes |
+| GET | `/css/…`, `/js/…`, `/data/…` | Static assets |
+
+The server rejects requests outside `public/` with 403, returns 404 for missing files, and returns 405 for methods other than GET and HEAD. It has no database and stores no user data.
+
+The application does not call these API endpoints yet. They exist for deployment checks and for future integration.
+
+## How the page loads
+
+1. `index.html` includes `css/styles.css` and the page markup.
+2. A small loader script fetches `data/embeddedData.txt` and `data/jmEmbedded.txt` and places their text into the matching `<script type="text/plain">` elements.
+3. When both files have loaded, the loader adds `js/app.js`. The app decodes the datasets itself (gzip and base64, using the browser's built-in decompression) and builds the search index.
+4. If a data file fails to load, the loading screen shows a message with the run instruction.
+
+Listeners that depend on page load timing (`DOMContentLoaded` and `load`) go through `__onReady` and `__onLoad` in `app.js`. They run at once if the event has already fired, which is the case here because the script loads after the page.
+
+## Single-file version
+
+A self-contained build is included separately as `LIS-KG-Explorer-final-titled.html`. It needs no server and works from `file://`, but it is about 17 MB because the data is embedded. Use the project layout for development and deployment, and the single file for sharing or offline use.
+
+## Data
+
+- `public/data/embeddedData.txt` and `public/data/jmEmbedded.txt` contain the LIS record sets in the format the app reads. Each file starts with a `GZB64:` tag, followed by gzip-compressed JSON encoded as base64. The app decodes them in the browser.
+- The collection contains 27,825 records from 100 journals (2020–2025), as shown in the app. Check the provenance and licence of the source records before publishing the data.
+- The data-building pipeline is not included in this project. Only its output is included. To rebuild the data, you need the original source files and the pipeline that produced these two files.
+
+## Methods (stated exactly)
+
+- Search: keyword and Boolean search with fielded, wildcard, phrase and proximity operators, plus facets.
+- Sorting: the "TF-IDF random-projection embeddings (96-d)" option uses TF-IDF vectors and a fixed random projection to 96 dimensions. It is not a trained neural model.
+- Semantic AI: rule-based intent detection.
+- Entity extraction, hypothesis generation and research-gap detection use heuristic rules and concept co-occurrence.
+- No model is trained on this collection.
+
+## Ontology and exports
+
+The Semantic Layer exports the ontology as Turtle, using `owl:Class` and `owl:ObjectProperty` declarations, and exports a SKOS concept scheme with the top 150 concepts. These are generated by the app. They are not a Protégé-authored ontology and they are not validated with SHACL. Validate them against your own OWL file before you claim conformance.
+
+## Evaluation
+
+The Evaluation tab computes precision, recall, F1 at K, average precision, ROC-AUC and nDCG for the current result set and exports the results as JSON. A thesis-grade evaluation also needs a fixed query set, relevance judgements, a keyword-only baseline run, a significance test, and English and Bengali results reported separately.
+
+## Development notes
+
+- `public/index.html`, `public/css/styles.css` and `public/js/app.js` are the editable source files. Edit them directly.
+- After editing, run `npm run check`. It checks the server and the application script for syntax errors. Then test in a browser.
+- There is no automated test suite yet. The Study Lab and Evaluation tabs in the app are for user studies, not unit tests.
+- The application script is a single file of about 800 KB. Splitting it into modules would require changes to the shared global state, so it has not been done.
+
+## Known limitations
+
+- Entirely client-side: no server-side search, no user accounts, and no shared storage. Saved searches and preferences live in the browser's `localStorage`.
+- The app calls external services (OpenAlex, Crossref, DBpedia, Wikipedia and SPARQL endpoints) directly from the browser. Their availability and rate limits are outside this project's control.
+- Browser support for voice search depends on the Web Speech API.
+- Bengali and Hindi retrieval relies on the bundled glossaries. Machine translation is used only for words not in the glossary, and only when the online translation option is enabled.
+
+## Licence and citation
+
+Licence: UNLICENSED (private project). Replace this with the licence you choose before sharing.
+
+Citation: add the thesis reference and the release DOI here.
